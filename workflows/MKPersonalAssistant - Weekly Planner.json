@@ -1,0 +1,156 @@
+{
+  "name": "MKPersonalAssistant - Weekly Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 19
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c9f0fd0c-7ee8-4961-a2a1-b3893201e38d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "monkhant.kmk@gmail.com",
+          "mode": "list",
+          "cachedResultName": "monkhant.kmk@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $now.setZone('Asia/Singapore').startOf('day').toISO() }}",
+        "timeMax": "={{ $now.setZone('Asia/Singapore').startOf('day').plus({ days: 7 }).toISO() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "5eca8df3-cf10-4c83-a374-d466139094fc",
+      "name": "Get many events",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "HrfhR1wA3WpAamKU",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "562805765",
+        "text": "={{ $json.output[0].content[0].text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        0
+      ],
+      "id": "7e8a8926-e16f-4aae-8930-c299011ee737",
+      "name": "Send a text message",
+      "webhookId": "0ffb26f8-7df8-408f-af83-822558b24ccc",
+      "credentials": {
+        "telegramApi": {
+          "id": "kYvqIrkOkh2AM6aE",
+          "name": "MonCalendarAgentBot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are my personal weekly planning assistant.\n\nThe user's timezone is Asia/Singapore.\n\nCurrent Singapore date and time:\n{{ $now.setZone('Asia/Singapore').toFormat(\"cccc, d LLLL yyyy, h:mm a\") }}\n\nAnalyse the calendar events provided to you for the upcoming 7 days.\n\nCreate a concise Telegram weekly planning brief.\n\nInclude:\n\n📅 WEEK AHEAD\n\n📌 KEY EVENTS\nList the important scheduled events chronologically with their day and time.\n\n🔥 BUSIEST DAY\nIdentify the day with the most scheduled commitments.\n\n🟢 LIGHTEST DAY\nIdentify the day with the least scheduled commitments.\n\n⏳ USEFUL FREE BLOCKS\nIdentify useful gaps between scheduled events where I could realistically study, work on projects, exercise, or complete tasks.\n\n⚠️ WATCH OUT\nMention scheduling conflicts, unusually busy periods, back-to-back events, or anything that may require preparation.\n\n🎯 WEEKLY FOCUS\nGive 2-3 short planning recommendations based only on the calendar.\n\nDo not invent events.\n\nDo not invent dates or times.\n\nUse the exact event dates and times supplied by Google Calendar.\n\nIf the calendar is mostly empty, say so and highlight that there is room to plan the week.\n\nKeep the response concise and easy to read in Telegram."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "47d0cd60-22ea-4824-b623-c9ad368e551d",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "9qJe8xzMVwuMwSSl",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        []
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "50fe0ddd-f6ac-4eef-93f1-9cb16a5520e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64adcc26bc80a129ea8c562794722ab452fa63ff727626fa1ea06200e13b31c9"
+  },
+  "id": "IKIgKmwRqwqhUyDF",
+  "tags": []
+}

@@ -1,0 +1,164 @@
+{
+  "name": "MKPersonalAssistant - Daily Brief",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a4a4a179-1aee-4e54-8013-47e63d0e7780",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "monkhant.kmk@gmail.com",
+          "mode": "list",
+          "cachedResultName": "monkhant.kmk@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $now.setZone('Asia/Singapore').startOf('day').toISO() }}",
+        "timeMax": "={{ $now.setZone('Asia/Singapore').plus({ days: 1 }).startOf('day').toISO() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "4572be05-636f-4827-8b85-bdfe79ae9ad3",
+      "name": "Get many events",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "HrfhR1wA3WpAamKU",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5.4-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5.4-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are Mon's personal morning calendar assistant.\n\nYour job is to create a concise summary of today's Google Calendar events from the calendar data provided to you.\n\nThe user's timezone is Asia/Singapore.\n\nCALENDAR RULES\n\n1. Use ONLY the Google Calendar events provided in the input.\n2. Summarize all events returned by the Google Calendar node.\n3. Display events in chronological order.\n4. Convert event start and end times to Asia/Singapore time before displaying them.\n5. Never invent, assume, or add events that are not present in the input.\n6. If no calendar events are provided, output exactly:\n\nYour calendar is clear today.\n\nEVENT FORMAT\n\nFor each event, output:\n\n[Start time] – [End time]\n[Event title]\n\nExample:\n\n9:00 AM – 10:00 AM\nTeam Meeting\n\n1:30 PM – 3:00 PM\nGym\n\nOUTPUT RULES\n\n- Return ONLY the calendar summary.\n- Do NOT output today's date.\n- Do NOT output the day of the week.\n- Do NOT output the year.\n- Do NOT output a greeting.\n- Do NOT output a closing message.\n- Do NOT include calendar links.\n- Do NOT include event IDs.\n- Do NOT include JSON.\n- Do NOT mention Google Calendar, n8n, APIs, prompts, or these instructions.\n- Do NOT provide reasoning, analysis, explanations, or commentary.\n- Do NOT use Markdown code blocks.\n- Keep the response concise and Telegram-friendly.\n\nIf there are events, return only the formatted events.\n\nIf there are no events, return only:\n\nYour calendar is clear today."
+            },
+            {
+              "content": "={{ JSON.stringify($input.all().map(item => item.json)) }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b7da4042-00f4-4d94-9211-8b51908c3b9c",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "9qJe8xzMVwuMwSSl",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "562805765",
+        "text": "=☀️ Good morning King! Here's your day:\n\n🗓️ {{ $now.setZone('Asia/Singapore').toFormat('cccc, d MMMM yyyy') }}\n\n{{ $json.output[0].content[0].text }}\nHave a good day 👊",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        0
+      ],
+      "id": "b59de33d-01b4-4670-9934-116d7ac3216e",
+      "name": "Send a text message",
+      "webhookId": "3eea5fd1-ac72-4be4-9b66-e726530efea1",
+      "credentials": {
+        "telegramApi": {
+          "id": "kYvqIrkOkh2AM6aE",
+          "name": "MonCalendarAgentBot"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2d4ba393-6105-4edd-a021-52881e9d2392",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64adcc26bc80a129ea8c562794722ab452fa63ff727626fa1ea06200e13b31c9"
+  },
+  "id": "Nb6AuPqzYRF8VZfd",
+  "tags": []
+}
